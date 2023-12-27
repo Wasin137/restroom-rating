@@ -1,10 +1,8 @@
 import React from 'react'
-import { useRouter } from 'next/navigation'
 
 const baseUrl_api = "https://mec-api.vercel.app"
 
 export default function card({ room }) {
-    const router = useRouter()
 
     const handleSubmit = async (rating) => {
         try {
@@ -16,7 +14,7 @@ export default function card({ room }) {
                 body: JSON.stringify({room, rating})
                 })
             if (res.ok) {
-                router.push('/')
+                console.log('OK')
             } else {
                 throw new Error('Failed to rate')
             }
