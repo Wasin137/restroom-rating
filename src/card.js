@@ -7,7 +7,7 @@ export default function Card({ room }) {
 
     const handleSubmit = async (rating) => {
         try {
-            const res = await fetch(`https://restroom-rating.vercel.app/api/rate`, {
+            const res = await fetch(`/api/rate`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
