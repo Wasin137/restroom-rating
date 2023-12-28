@@ -7,7 +7,7 @@ export default function Card({ room }) {
 
     const handleSubmit = async (rating) => {
         try {
-            const res = await fetch(`/api/rate`, {
+            const res = await fetch(`${process.env.BASEURL_API}/api/rate`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
