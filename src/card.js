@@ -1,9 +1,7 @@
-'use client'
-
 import React from 'react'
 import { useRouter } from 'next/navigation'
 
-export default function card({ room }) {
+export default function Card({ room }) {
 
     const router = useRouter()
 
