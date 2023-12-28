@@ -1,12 +1,14 @@
 import React from 'react'
 import { useRouter } from 'next/navigation'
 
+const apiPath = process.env.NEXT_PUBLIC_BASEURLAPI
+
 export default function Card({ room }) {
     const router = useRouter()
 
     const handleSubmit = async (rating) => {
         try {
-            const res = await fetch(`${process.env.BASEURLAPI}/rate`, {
+            const res = await fetch(`${apiPath}/rate`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
