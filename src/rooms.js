@@ -12,15 +12,19 @@ const formatDate = dateString => {
 
 export default function Rooms() {
     const [rooms, setRooms] = useState([]);
+    const [isLoading, setIsLoading] = useState(true)
 
     useEffect(() => {
+        setIsLoading(true)
         fetch(`${apiPath}/room`, { cache: 'no-store' })
             .then(res => res.json())
             .then(data => {
                 setRooms(data.rooms);
+                setIsLoading(false)
             })
             .catch(error => {
                 console.log('Error loading data', error);
+                setIsLoading(false)
             });
     }, []);
 
@@ -48,7 +52,7 @@ export default function Rooms() {
     const deleteRoom = async (roomId) => {
         const confirmDelete = window.confirm('ยืนยันลบห้องและคะแนนทั้งหมด')
         if (!confirmDelete) return
-        
+
         try {
             const res = await fetch(`${apiPath}/deleteRoom?id=${roomId}`, {
                 method: "DELETE"
@@ -63,7 +67,10 @@ export default function Rooms() {
             console.log(error)
         }
     }
-
+    if (isLoading) {
+        return <div className='text-3xl text-center'>Loading...</div>
+    }
+    
   return (
     <>
         <div className="relative overflow-x-auto shadow-md sm:rounded-lg">

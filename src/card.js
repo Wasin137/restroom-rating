@@ -1,13 +1,15 @@
 'use client'
-import React from 'react'
+import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 const apiPath = process.env.NEXT_PUBLIC_BASEURLAPI
 
 export default function Card({ roomname , roomId}) {
     const route = useRouter()
+    const [isLoading, setIsLoading] = useState(false)
 
     const handleSubmit = async (roomId, rating) => {
+        setIsLoading(true)
         try {
             const res = await fetch(`${apiPath}/rate`, {
                 method: "POST",
@@ -23,6 +25,8 @@ export default function Card({ roomname , roomId}) {
             }
         } catch (error){
             console.log(error)
+        } finally {
+            setIsLoading(false)
         }
     }
 
@@ -72,6 +76,13 @@ export default function Card({ roomname , roomId}) {
                 </a>
             </li>
         </ul>
+        {isLoading && (
+        <div className="absolute top-0 left-0 w-full h-full bg-black bg-opacity-50 flex items-center justify-center">
+            <div className="bg-white p-4 rounded-lg">
+                <p className='text-3xl text-center'>Loading...</p>
+            </div>
+        </div>
+        )}
         <div>
             <a href="#" className="inline-flex items-center text-xs font-normal text-gray-500 hover:underline dark:text-gray-400">
                 ติดต่อ-แจ้งปัญหา : สำนักงานศูนย์แพทย์ศาสตร์ศึกษาชั้นคลินิกโรงพยาบาลหาดใหญ่
