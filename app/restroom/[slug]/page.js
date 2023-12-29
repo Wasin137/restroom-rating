@@ -1,21 +1,28 @@
-'use client'
 import Card from "@/src/card"
-import { useState, useEffect } from "react"
 
-export default function Restroom({ params }) {
-    const [name, setName] = useState('');
+const apiPath = process.env.NEXT_PUBLIC_BASEURLAPI
 
-    useEffect(() => {
-        if (params.slug === 'm1') {
-            setName('ห้องน้ำชายชั้น 1')
-        } else if (params.slug === 'w1') {
-            setName('ห้องน้ำหญิงชั้น 1')
+const getRoomName = async (id) => {
+    try {
+        const res = await fetch(`${apiPath}/roomname?id=${id}`, {
+            cache: 'no-store',
+        })
+        if(!res.ok) {
+            throw new Error('Failed to fetch rooms')
         }
-    }, [params.slug]);
+
+        return res.json()
+    } catch(error){
+        console.log('Error loading data', error)
+    }
+}
+
+export default async function Restroom({ params }) {
+    const room = await getRoomName(params.slug)
 
     return (
         <div className="flex justify-center items-center min-h-screen p-2">
-            <Card room={name} />
+            <Card roomname={room.name} roomId={room._id}/>
         </div>
     );
 }
