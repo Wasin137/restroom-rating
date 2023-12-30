@@ -5,6 +5,9 @@ const apiPath = process.env.NEXT_PUBLIC_BASEURLAPI
 const basePath = process.env.NEXT_PUBLIC_BASEURL
 
 const formatDate = dateString => {
+    if (!dateString) {
+        return ''
+    }
     const date = new Date(dateString);
     const pad = num => String(num).padStart(2, '0');
     return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
@@ -12,7 +15,11 @@ const formatDate = dateString => {
 
 export default function Rooms() {
     const [rooms, setRooms] = useState([]);
+    const [sortedRooms, setSortedRooms] = useState([])
     const [isLoading, setIsLoading] = useState(true)
+    const [sortField, setSortField] = useState('name')
+    const [sortDirection, setSortDirection] = useState('asc')
+    const [searchTerm, setSearchTerm] = useState('')
 
     useEffect(() => {
         setIsLoading(true)
@@ -22,11 +29,48 @@ export default function Rooms() {
                 setRooms(data.rooms);
                 setIsLoading(false)
             })
-            .catch(error => {
+            .catch(error => {       
                 console.log('Error loading data', error);
                 setIsLoading(false)
             });
     }, []);
+
+    const sortRooms = (field) => {
+        const isAsc = sortField === field && sortDirection === 'asc'
+        setSortDirection(isAsc ? 'desc' : 'asc')
+        setSortField(field)
+    }
+
+    useEffect(() => {
+        const sortRooms = () => {
+            return [...rooms].sort((a,b) => {
+            let valA = a[sortField]
+            let valB = b[sortField]
+
+            if (sortField === 'averageRating') {
+                if (valA === 'No ratings yet' && valB === 'No ratings yet') return 0
+                if (valA === 'No ratings yet') return 1
+                if (valB === 'No ratings yet') return -1
+
+                valA = parseFloat(valA)
+                valB = parseFloat(valB)
+            } else if(sortField === 'lastRatedAt') {
+                valA = new Date(valA)
+                valB = new Date(valB)
+            }
+
+            if (valA < valB) {
+                return sortDirection === 'asc' ? -1 : 1
+            }
+            if (valA > valB) {
+                return sortDirection === 'asc' ? 1: -1
+            }
+            return 0
+        })
+        }
+
+        setSortedRooms(sortRooms)
+    }, [sortField, sortDirection, rooms])
 
     const resetRating = async (roomId) => {
         const confirmReset = window.confirm('ยืนยันลบคะแนนทั้งหมด!')
@@ -70,9 +114,28 @@ export default function Rooms() {
     if (isLoading) {
         return <div className='text-3xl text-center'>Loading...</div>
     }
+
+    const getSortIndicator = (field) => {
+        return sortField === field ? (sortDirection === 'asc' ? ' ↑':' ↓'): ''
+    }
     
   return (
     <>
+        <div className="relative m-2">
+            <div className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+                <svg className="w-4 h-4 text-gray-500 dark:text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                    <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/>
+                </svg>
+            </div>
+            <input
+                type="search"
+                id="search"
+                className='block w-full p-4 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500'
+                placeholder="ค้นหาชื่อห้อง"
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+            />
+        </div>
         <div className="relative overflow-x-auto shadow-md sm:rounded-lg">
             <table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
                 <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
@@ -80,14 +143,14 @@ export default function Rooms() {
                         <th scope="col" className="px-6 py-3">
                             RoomId
                         </th>
-                        <th scope="col" className="px-6 py-3">
-                            Name
+                        <th scope="col" className="px-6 py-3 cursor-pointer" onClick={() => sortRooms('name')}>
+                            Name{getSortIndicator('name')}
                         </th>
-                        <th scope="col" className="px-6 py-3">
-                            Overall Rating
+                        <th scope="col" className="px-6 py-3 cursor-pointer" onClick={() => sortRooms('averageRating')}>
+                            Overall Rating{getSortIndicator('averageRating')}
                         </th>
-                        <th scope="col" className="px-6 py-3">
-                            Last rated
+                        <th scope="col" className="px-6 py-3 cursor-pointer" onClick={() => sortRooms('lastRatedAt')}>
+                            Last rated{getSortIndicator('lastRatedAt')}
                         </th>
                         <th scope="col" className="px-6 py-3">
                             Link to rate
@@ -98,7 +161,7 @@ export default function Rooms() {
                     </tr>
                 </thead>
                 <tbody>
-                {rooms.map(r => (
+                {sortedRooms.filter(room => searchTerm === '' || room.name.toLowerCase().includes(searchTerm.toLowerCase())).map(r => (
                     <tr className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600" key={r._id}>
                         <th scope="row" className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
                             {r._id}
@@ -116,11 +179,13 @@ export default function Rooms() {
                         <td className="px-6 py-4">
                             <div className='flex items-start'>
                                 {r.averageRating}
-                                <a href='#' onClick={() => resetRating(r._id)}>
-                                    <svg className="w-3.5 h-3.5 ms-2 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
-                                        <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m13 7-6 6m0-6 6 6m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
-                                    </svg>
-                                </a>
+                                {r.averageRating !== 'No ratings yet' && (
+                                    <a href='#' onClick={() => resetRating(r._id)}>
+                                        <svg className="w-3.5 h-3.5 ms-2 text-gray-800 dark:text-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+                                            <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="m13 7-6 6m0-6 6 6m6-3a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+                                        </svg>
+                                    </a>
+                                )}
                             </div>
                         </td>
                         <td className="px-6 py-4">
